@@ -1,6 +1,6 @@
 import { Sequelize } from "sequelize";
 import { NextResponse } from "next/server";
-import { User } from "@/app/models/images";
+import { CameraImage } from "@/app/models/images";
 import { detectFaces } from "@/app/services/faceDetection";
 
 export async function POST(request) {
@@ -27,15 +27,15 @@ export async function POST(request) {
 
   const results = [];
   for (const faceId of faceIds) {
-    const user = await User.findOne({
+    const findImage = await CameraImage.findOne({
       where: Sequelize.fn(
         "JSON_CONTAINS",
         Sequelize.col("faceIds"),
         `"${faceId}"`,
       ),
     });
-    if (user) {
-      results.push({ faceId, imagePath: user.imagePath });
+    if (findImage) {
+      results.push({ faceId, imagePath: findImage.imagePath });
     } else {
       results.push({ faceId, imagePath: "" });
     }
