@@ -14,6 +14,14 @@ export async function POST(request) {
     );
   }
 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB tính bằng bytes
+  if (image.size > MAX_FILE_SIZE) {
+    return NextResponse.json(
+      { error: "Kích thước ảnh quá lớn. Vui lòng upload file dưới 5MB." },
+      { status: 413 },
+    );
+  }
+
   const imageBuffer = Buffer.from(await image.arrayBuffer());
   const faceIds = await detectFaces(imageBuffer);
 

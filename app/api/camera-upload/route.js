@@ -9,10 +9,26 @@ export async function POST(request) {
     const originalImage = formData.get("original");
     const backgroundImage = formData.get("background");
 
-    if (!originalImage || typeof originalImage === "string") {
+    if (
+      !originalImage ||
+      typeof originalImage === "string" ||
+      !backgroundImage ||
+      typeof backgroundImage === "string"
+    ) {
       return NextResponse.json(
-        { error: 'Yêu cầu phải có đủ cả hai file "original" và "background".' },
+        { error: "Vui lòng upload đầy đủ ảnh." },
         { status: 400 },
+      );
+    }
+
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB tính bằng bytes
+    if (
+      originalImage.size > MAX_FILE_SIZE ||
+      backgroundImage.size > MAX_FILE_SIZE
+    ) {
+      return NextResponse.json(
+        { error: "Kích thước ảnh quá lớn. Vui lòng upload file dưới 5MB." },
+        { status: 413 },
       );
     }
 
