@@ -1,6 +1,6 @@
 import { Sequelize } from "sequelize";
 import { NextResponse } from "next/server";
-import { CameraImage } from "@/models/images";
+import { CameraImage } from "@/models";
 import { detectFaces } from "@/services/faceDetection";
 
 export async function POST(request) {

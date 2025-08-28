@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuthApi } from "@/libs/authMiddleware";
-import { User } from "@/models/users";
+import { User } from "@/models";
 
 export const GET = withAuthApi(async (req, context, userPayload) => {
   try {

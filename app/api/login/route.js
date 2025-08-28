@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { NextResponse } from "next/server";
-import { User } from "@/models/users";
+import { User } from "@/models";
 
 export async function POST(request) {
   const formData = await request.formData();

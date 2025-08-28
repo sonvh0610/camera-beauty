@@ -3,8 +3,8 @@ import path from "path";
 import { NextResponse } from "next/server";
 import { processImageWithPhotoroom } from "@/services/photoroom";
 import { detectFaces } from "@/services/faceDetection";
-import { CameraImage } from "@/models/images";
 import { getIO } from "@/libs/socket";
+import { CameraImage } from "@/models";
 
 export async function POST(request) {
   try {

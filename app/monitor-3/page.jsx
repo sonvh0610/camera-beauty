@@ -20,7 +20,6 @@ import { useSocket } from "@/libs/socket-context";
 function Monitor2Page({ user }) {
   const [images, setImages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCompleting, setIsCompleting] = useState(false);
   const [error, setError] = useState(null);
   const socket = useSocket();
 
@@ -89,17 +88,15 @@ function Monitor2Page({ user }) {
     );
   };
 
-  const handleDeselectAll = (showToast = true) => {
+  const handleDeselectAll = () => {
     setImages(images.map((img) => ({ ...img, isSelected: false })));
-    if (showToast) {
-      toaster.create({
-        title: "Đã bỏ chọn tất cả ảnh.",
-        type: "success",
-      });
-    }
+    toaster.create({
+      title: "Đã bỏ chọn tất cả ảnh.",
+      type: "success",
+    });
   };
 
-  const handleComplete = async () => {
+  const handleComplete = () => {
     if (selectedImages.length === 0) {
       toaster.create({
         title: "Vui lòng chọn ít nhất một ảnh.",
@@ -108,41 +105,13 @@ function Monitor2Page({ user }) {
       return;
     }
 
-    setIsCompleting(true);
-    try {
-      const token = localStorage.getItem("authToken");
-      const imageIds = selectedImages.map((img) => img.id);
-
-      const response = await fetch("/api/image/create-ticket", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ imageIds }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Tạo phiếu thất bại.");
-      }
-
-      toaster.create({
-        title: "Thành công!",
-        description: result.message,
-        type: "success",
-      });
-      handleDeselectAll(false);
-    } catch (err) {
-      toaster.create({
-        title: "Đã xảy ra lỗi",
-        description: err.message,
-        type: "error",
-      });
-    } finally {
-      setIsCompleting(false);
-    }
+    toaster.create({
+      title: "Hoàn thành!",
+      description: `Bạn đã chọn ${selectedImages.length} ảnh.`,
+      type: "success",
+    });
+    console.log("Các ảnh đã chọn:", selectedImages);
+    // Tại đây, bạn có thể gửi danh sách ảnh đã chọn lên server
   };
 
   return (
@@ -197,7 +166,8 @@ function Monitor2Page({ user }) {
                   onClick={() => handleSelectImage(image.id)}
                   cursor="pointer"
                   border="3px solid"
-                  borderColor={image.isSelected ? "green.400" : "gray.300"}
+                  // Thay đổi màu viền dựa trên trạng thái isSelected
+                  borderColor={image.isSelected ? "green.400" : "red.300"}
                   borderRadius="md"
                   overflow="hidden"
                   position="relative"
@@ -236,18 +206,19 @@ function Monitor2Page({ user }) {
           )}
         </Box>
 
+        {/* Các nút hành động */}
         <Stack direction="row" spacing={4} mt={8} justify="center">
           <Button
             colorPalette="blue"
             onClick={handleComplete}
-            disabled={selectedImages.length === 0 || isCompleting}
+            isDisabled={selectedImages.length === 0}
           >
             Hoàn thành ({selectedImages.length})
           </Button>
           <Button
             colorPalette="red"
             onClick={handleDeselectAll}
-            disabled={selectedImages.length === 0}
+            isDisabled={selectedImages.length === 0}
           >
             Bỏ chọn tất cả
           </Button>
