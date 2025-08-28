@@ -4,9 +4,17 @@ import { Ticket } from "./tickets";
 import { CameraImage } from "./images";
 import { TicketImage } from "./ticket-images";
 
-CameraImage.belongsToMany(Ticket, { through: TicketImage });
-Ticket.belongsTo(User);
-Ticket.belongsToMany(CameraImage, { through: TicketImage });
+CameraImage.belongsToMany(Ticket, {
+  through: TicketImage,
+  as: "tickets",
+  foreignKey: "imageId",
+});
+Ticket.belongsTo(User, { as: "user", foreignKey: "userId" });
+Ticket.belongsToMany(CameraImage, {
+  through: TicketImage,
+  as: "images",
+  foreignKey: "ticketId",
+});
 
 // Xuất ra tất cả các model đã được thiết lập mối quan hệ
 export { sequelize, User, Ticket, CameraImage, TicketImage };

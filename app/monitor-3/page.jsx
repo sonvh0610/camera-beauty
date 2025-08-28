@@ -6,226 +6,157 @@ import {
   Flex,
   Heading,
   SimpleGrid,
-  Image,
   Button,
-  Stack,
-  Alert,
   Text,
   Spinner,
+  Tag,
 } from "@chakra-ui/react";
-import withAuth from "@/components/hoc/withAuth";
+
 import { toaster } from "@/components/ui/toaster";
+import withAuth from "@/components/hoc/withAuth";
+import { ticketGaleryDialog } from "@/components/ui/ticket-gallery-dialog";
 import { useSocket } from "@/libs/socket-context";
 
-function Monitor2Page({ user }) {
-  const [images, setImages] = useState([]);
+function Monitor3Page({ user }) {
+  const [tickets, setTickets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+
   const socket = useSocket();
 
   useEffect(() => {
-    const fetchImages = async () => {
+    const fetchTickets = async () => {
       setIsLoading(true);
-      setError(null);
       try {
         const token = localStorage.getItem("authToken");
-        const response = await fetch("/api/image", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const response = await fetch("/api/ticket", {
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) {
-          throw new Error("Không thể tải dữ liệu ảnh từ server.");
+          throw new Error("Không thể tải danh sách phiếu.");
         }
         const result = await response.json();
-
-        const formattedImages = result.data.map((img) => ({
-          id: img.id,
-          src: img.imagePath,
-          isSelected: false,
-        }));
-
-        setImages(formattedImages);
-      } catch (err) {
-        setError(err.message);
+        setTickets(result.data);
+      } catch (error) {
         toaster.create({
-          title: "Lỗi tải ảnh",
-          description: err.message,
+          title: "Lỗi",
+          description: error.message,
           type: "error",
         });
       } finally {
         setIsLoading(false);
       }
     };
+    fetchTickets();
+  }, [toaster]);
 
-    fetchImages();
+  // useEffect để lắng nghe sự kiện WebSocket
+  useEffect(() => {
+    if (!socket) return;
 
-    if (socket) {
-      socket.off("new-image");
-      socket.on("new-image", (newImage) => {
-        const formattedNewImage = {
-          id: newImage.id,
-          src: newImage.imagePath,
-          isSelected: false,
-        };
-        setImages((prevImages) => [formattedNewImage, ...prevImages]);
-        toaster.create({
-          title: "Có ảnh mới!",
-          description: `Ảnh từ camera ${newImage.cameraId} đã được thêm.`,
-          type: "success",
-        });
-      });
-    }
-  }, [toaster, socket]);
-
-  const selectedImages = images.filter((img) => img.isSelected);
-
-  const handleSelectImage = (id) => {
-    setImages(
-      images.map((img) =>
-        img.id === id ? { ...img, isSelected: !img.isSelected } : img,
-      ),
-    );
-  };
-
-  const handleDeselectAll = () => {
-    setImages(images.map((img) => ({ ...img, isSelected: false })));
-    toaster.create({
-      title: "Đã bỏ chọn tất cả ảnh.",
-      type: "success",
-    });
-  };
-
-  const handleComplete = () => {
-    if (selectedImages.length === 0) {
+    const handleNewTicket = (newTicket) => {
+      setTickets((prevTickets) => [newTicket, ...prevTickets]);
       toaster.create({
-        title: "Vui lòng chọn ít nhất một ảnh.",
-        type: "warning",
+        title: "Thông báo",
+        description: `Có phiếu mới #${newTicket.id} vừa được tạo.`,
+        type: "info",
       });
-      return;
-    }
+    };
 
-    toaster.create({
-      title: "Hoàn thành!",
-      description: `Bạn đã chọn ${selectedImages.length} ảnh.`,
-      type: "success",
-    });
-    console.log("Các ảnh đã chọn:", selectedImages);
-    // Tại đây, bạn có thể gửi danh sách ảnh đã chọn lên server
+    socket.on("new-ticket", handleNewTicket);
+
+    return () => {
+      socket.off("new-ticket", handleNewTicket);
+    };
+  }, [socket]);
+
+  const handleViewTicket = (ticket) => {
+    ticketGaleryDialog.open("a", { ticket });
+    setSelectedTicket(ticket);
   };
+
+  if (isLoading) {
+    return (
+      <Flex minH="100vh" align="center" justify="center">
+        <Spinner size="xl" />
+      </Flex>
+    );
+  }
 
   return (
-    <Flex
-      direction="column"
-      align="center"
-      justify="center"
-      minH="100vh"
-      bg="gray.50"
-      p={{ base: 4, md: 8 }}
-    >
-      <Box
-        bg="white"
-        p="20px"
-        borderRadius="lg"
-        boxShadow="lg"
-        w="full"
-        maxW="800px"
-        display="flex"
-        flexDirection="column"
-        maxH="90vh"
-      >
-        {user && (
-          <Text fontSize="md" color="gray.600">
-            Xin chào, <strong>{user.displayName}</strong>
-          </Text>
-        )}
-        <Heading as="h1" fontSize="30px" textAlign="center" mb={8}>
-          Chọn ảnh
-        </Heading>
+    <>
+      <Flex direction="column" minH="100vh" bg="gray.50" p={8}>
+        <Flex justify="space-between" align="center" mb={8}>
+          <Heading as="h1" size="lg">
+            Danh sách phiếu
+          </Heading>
+          {user && (
+            <Text>
+              Xin chào, <strong>{user.displayName}</strong>
+            </Text>
+          )}
+        </Flex>
 
-        {/* Box chứa lưới ảnh, có thể cuộn */}
-        <Box flexGrow={1} overflowY="auto" overflowX="hidden" p="10px">
-          {isLoading ? (
-            <Flex justify="center" align="center" h="100%">
-              <Spinner size="xl" />
-            </Flex>
-          ) : error ? (
-            <Alert.Root status="error" title={error}>
-              <Alert.Indicator />
-              <Alert.Title>{error}</Alert.Title>
-            </Alert.Root>
-          ) : images.length === 0 ? (
-            <Flex justify="center" align="center" h="100%">
-              <Text color="gray.500">Không có ảnh nào để hiển thị.</Text>
-            </Flex>
-          ) : (
-            <SimpleGrid columns={{ base: 2, sm: 3, md: 4 }} gap="10px">
-              {images.map((image) => (
+        {tickets.length === 0 ? (
+          <Text>Không có phiếu nào để hiển thị.</Text>
+        ) : (
+          <Box flexGrow={1} overflowY="auto" overflowX="hidden" p="10px">
+            <SimpleGrid gap="15px">
+              {tickets.map((ticket) => (
                 <Box
-                  key={image.id}
-                  onClick={() => handleSelectImage(image.id)}
-                  cursor="pointer"
-                  border="3px solid"
-                  // Thay đổi màu viền dựa trên trạng thái isSelected
-                  borderColor={image.isSelected ? "green.400" : "red.300"}
-                  borderRadius="md"
-                  overflow="hidden"
-                  position="relative"
-                  transition="all 0.2s"
-                  _hover={{
-                    transform: "scale(1.05)",
-                    boxShadow: "md",
-                  }}
+                  key={ticket.id}
+                  p={5}
+                  shadow="md"
+                  borderWidth="1px"
+                  borderRadius="lg"
+                  bg="white"
                 >
-                  <Image
-                    src={image.src}
-                    alt={`Ảnh ${image.id}`}
-                    fit="cover"
-                    aspectRatio="1"
-                  />
-                  {image.isSelected && (
-                    <Box
-                      position="absolute"
-                      top={0}
-                      left={0}
-                      right={0}
-                      bottom={0}
-                      bg="blackAlpha.500"
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                    >
-                      <Box color="white" fontSize="2xl" fontWeight="bold">
-                        ✓
-                      </Box>
+                  <Flex justify="space-between" align="stretch">
+                    <Box>
+                      <Heading fontSize="xl">Phiếu #{ticket.id}</Heading>
+                      <Text mt={2} color="gray.600">
+                        Tạo bởi:{" "}
+                        <strong>{ticket.user?.displayName || "N/A"}</strong>
+                      </Text>
+                      <Text mt={2} color="gray.500">
+                        Ngày tạo: {new Date(ticket.createdAt).toLocaleString()}
+                      </Text>
+                      <Text mt={2}>
+                        Số lượng ảnh:{" "}
+                        <strong>{ticket.images?.length || 0}</strong>
+                      </Text>
                     </Box>
-                  )}
+                    <Flex
+                      direction="column"
+                      align="flex-end"
+                      justify="space-between"
+                    >
+                      <Tag.Root
+                        colorPalette={
+                          ticket.status === "PENDING" ? "yellow" : "green"
+                        }
+                      >
+                        <Tag.Label>{ticket.status}</Tag.Label>
+                      </Tag.Root>
+                      <Button
+                        mt={4}
+                        colorPalette="blue"
+                        onClick={() => handleViewTicket(ticket)}
+                        disabled={!ticket.images || ticket.images.length === 0}
+                      >
+                        Xem chi tiết
+                      </Button>
+                    </Flex>
+                  </Flex>
                 </Box>
               ))}
             </SimpleGrid>
-          )}
-        </Box>
-
-        {/* Các nút hành động */}
-        <Stack direction="row" spacing={4} mt={8} justify="center">
-          <Button
-            colorPalette="blue"
-            onClick={handleComplete}
-            isDisabled={selectedImages.length === 0}
-          >
-            Hoàn thành ({selectedImages.length})
-          </Button>
-          <Button
-            colorPalette="red"
-            onClick={handleDeselectAll}
-            isDisabled={selectedImages.length === 0}
-          >
-            Bỏ chọn tất cả
-          </Button>
-        </Stack>
-      </Box>
-    </Flex>
+          </Box>
+        )}
+        <ticketGaleryDialog.Viewport />
+      </Flex>
+    </>
   );
 }
 
-export default withAuth(Monitor2Page);
+export default withAuth(Monitor3Page);

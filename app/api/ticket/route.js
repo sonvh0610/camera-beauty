@@ -1,8 +1,36 @@
 import { NextResponse } from "next/server";
 import { withAuthApi } from "@/libs/authMiddleware";
-import { sequelize } from "@/libs/sequelize";
+import { CameraImage, sequelize, Ticket, TicketImage, User } from "@/models";
 import { getIO } from "@/libs/socket";
-import { Ticket, TicketImage } from "@/models";
+
+const getTicketsHandler = async () => {
+  try {
+    const tickets = await Ticket.findAll({
+      order: [["createdAt", "DESC"]],
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["displayName"],
+        },
+        {
+          model: CameraImage,
+          as: "images",
+          attributes: ["id", "cameraId", "imagePath"],
+          through: { attributes: [] },
+        },
+      ],
+    });
+
+    return NextResponse.json({ success: true, data: tickets });
+  } catch (error) {
+    console.error("API /api/tickets error:", error);
+    return NextResponse.json(
+      { success: false, message: "Lỗi máy chủ nội bộ." },
+      { status: 500 },
+    );
+  }
+};
 
 const createTicketHandler = async (req, context, userPayload) => {
   const t = await sequelize.transaction();
@@ -31,10 +59,21 @@ const createTicketHandler = async (req, context, userPayload) => {
     }));
 
     await TicketImage.bulkCreate(ticketImagesData, { transaction: t });
-
     await t.commit();
 
-    io.emit("new-ticket", { id: newTicket.id });
+    const completeTicket = await Ticket.findByPk(newTicket.id, {
+      include: [
+        { model: User, as: "user", attributes: ["displayName"] },
+        {
+          model: CameraImage,
+          as: "images",
+          attributes: ["id", "cameraId", "imagePath"],
+          through: { attributes: [] },
+        },
+      ],
+    });
+
+    io.emit("new-ticket", completeTicket);
 
     return NextResponse.json({
       success: true,
@@ -53,4 +92,5 @@ const createTicketHandler = async (req, context, userPayload) => {
   }
 };
 
+export const GET = withAuthApi(getTicketsHandler);
 export const POST = withAuthApi(createTicketHandler);

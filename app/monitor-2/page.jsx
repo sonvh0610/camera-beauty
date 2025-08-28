@@ -113,7 +113,7 @@ function Monitor2Page({ user }) {
       const token = localStorage.getItem("authToken");
       const imageIds = selectedImages.map((img) => img.id);
 
-      const response = await fetch("/api/image/create-ticket", {
+      const response = await fetch("/api/ticket", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
