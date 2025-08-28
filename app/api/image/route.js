@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const allImages = await CameraImage.findAll({
     attributes: ["id", "cameraId", "imagePath"],
+    order: [["createdAt", "DESC"]],
   });
   return NextResponse.json({ data: allImages }, { status: 200 });
 }

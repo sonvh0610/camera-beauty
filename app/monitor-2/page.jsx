@@ -9,13 +9,18 @@ import {
   Image,
   Button,
   Stack,
+  Alert,
+  Text,
+  Spinner,
 } from "@chakra-ui/react";
 import { toaster } from "@/components/ui/toaster";
+import { useSocket } from "@/libs/socket-context";
 
 export default function Monitor2Page() {
   const [images, setImages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const socket = useSocket();
 
   useEffect(() => {
     const fetchImages = async () => {
@@ -48,12 +53,27 @@ export default function Monitor2Page() {
     };
 
     fetchImages();
-  }, [toaster]); // Thêm toast vào dependency array vì nó được sử dụng bên trong effect
 
-  // Lấy danh sách các ảnh đã được chọn
+    if (socket) {
+      socket.off("new-image");
+      socket.on("new-image", (newImage) => {
+        const formattedNewImage = {
+          id: newImage.id,
+          src: newImage.imagePath,
+          isSelected: false,
+        };
+        setImages((prevImages) => [formattedNewImage, ...prevImages]);
+        toaster.create({
+          title: "Có ảnh mới!",
+          description: `Ảnh từ camera ${newImage.cameraId} đã được thêm.`,
+          type: "success",
+        });
+      });
+    }
+  }, [toaster, socket]);
+
   const selectedImages = images.filter((img) => img.isSelected);
 
-  // Hàm xử lý khi người dùng chọn hoặc bỏ chọn một ảnh
   const handleSelectImage = (id) => {
     setImages(
       images.map((img) =>
@@ -62,7 +82,6 @@ export default function Monitor2Page() {
     );
   };
 
-  // Hàm xử lý khi nhấn nút "Bỏ chọn tất cả"
   const handleDeselectAll = () => {
     setImages(images.map((img) => ({ ...img, isSelected: false })));
     toaster.create({
@@ -71,7 +90,6 @@ export default function Monitor2Page() {
     });
   };
 
-  // Hàm xử lý khi nhấn nút "Hoàn thành"
   const handleComplete = () => {
     if (selectedImages.length === 0) {
       toaster.create({
@@ -81,7 +99,6 @@ export default function Monitor2Page() {
       return;
     }
 
-    // Hiển thị thông báo và log ra console
     toaster.create({
       title: "Hoàn thành!",
       description: `Bạn đã chọn ${selectedImages.length} ảnh.`,
@@ -117,50 +134,65 @@ export default function Monitor2Page() {
 
         {/* Box chứa lưới ảnh, có thể cuộn */}
         <Box flexGrow={1} overflowY="auto" overflowX="hidden" p="10px">
-          <SimpleGrid columns={{ base: 2, sm: 3, md: 4 }} gap="10px">
-            {images.map((image) => (
-              <Box
-                key={image.id}
-                onClick={() => handleSelectImage(image.id)}
-                cursor="pointer"
-                border="3px solid"
-                // Thay đổi màu viền dựa trên trạng thái isSelected
-                borderColor={image.isSelected ? "green.400" : "red.300"}
-                borderRadius="md"
-                overflow="hidden"
-                position="relative"
-                transition="all 0.2s"
-                _hover={{
-                  transform: "scale(1.05)",
-                  boxShadow: "md",
-                }}
-              >
-                <Image
-                  src={image.src}
-                  alt={`Ảnh ${image.id}`}
-                  fit="cover"
-                  aspectRatio="1"
-                />
-                {image.isSelected && (
-                  <Box
-                    position="absolute"
-                    top={0}
-                    left={0}
-                    right={0}
-                    bottom={0}
-                    bg="blackAlpha.500"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <Box color="white" fontSize="2xl" fontWeight="bold">
-                      ✓
+          {isLoading ? (
+            <Flex justify="center" align="center" h="100%">
+              <Spinner size="xl" />
+            </Flex>
+          ) : error ? (
+            <Alert.Root status="error" title={error}>
+              <Alert.Indicator />
+              <Alert.Title>{error}</Alert.Title>
+            </Alert.Root>
+          ) : images.length === 0 ? (
+            <Flex justify="center" align="center" h="100%">
+              <Text color="gray.500">Không có ảnh nào để hiển thị.</Text>
+            </Flex>
+          ) : (
+            <SimpleGrid columns={{ base: 2, sm: 3, md: 4 }} gap="10px">
+              {images.map((image) => (
+                <Box
+                  key={image.id}
+                  onClick={() => handleSelectImage(image.id)}
+                  cursor="pointer"
+                  border="3px solid"
+                  // Thay đổi màu viền dựa trên trạng thái isSelected
+                  borderColor={image.isSelected ? "green.400" : "red.300"}
+                  borderRadius="md"
+                  overflow="hidden"
+                  position="relative"
+                  transition="all 0.2s"
+                  _hover={{
+                    transform: "scale(1.05)",
+                    boxShadow: "md",
+                  }}
+                >
+                  <Image
+                    src={image.src}
+                    alt={`Ảnh ${image.id}`}
+                    fit="cover"
+                    aspectRatio="1"
+                  />
+                  {image.isSelected && (
+                    <Box
+                      position="absolute"
+                      top={0}
+                      left={0}
+                      right={0}
+                      bottom={0}
+                      bg="blackAlpha.500"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      <Box color="white" fontSize="2xl" fontWeight="bold">
+                        ✓
+                      </Box>
                     </Box>
-                  </Box>
-                )}
-              </Box>
-            ))}
-          </SimpleGrid>
+                  )}
+                </Box>
+              ))}
+            </SimpleGrid>
+          )}
         </Box>
 
         {/* Các nút hành động */}

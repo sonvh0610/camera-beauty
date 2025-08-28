@@ -4,9 +4,11 @@ import { NextResponse } from "next/server";
 import { processImageWithPhotoroom } from "@/services/photoroom";
 import { detectFaces } from "@/services/faceDetection";
 import { CameraImage } from "@/models/images";
+import { getIO } from "@/libs/socket";
 
 export async function POST(request) {
   try {
+    const io = getIO();
     const formData = await request.formData();
     const cameraId = formData.get("cameraId");
     const image = formData.get("image");
@@ -49,7 +51,13 @@ export async function POST(request) {
       imagePath: result.outputUrl,
       faceIds,
     };
-    await CameraImage.create(resultData);
+    const cameraImageData = await CameraImage.create(resultData);
+
+    io.emit("new-image", {
+      id: cameraImageData.id,
+      cameraId: cameraImageData.cameraId,
+      imagePath: cameraImageData.imagePath,
+    });
 
     return NextResponse.json(
       { message: "Xử lý và ghép ảnh thành công!", data: resultData },
