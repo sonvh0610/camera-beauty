@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { SocketProvider } from "@/libs/socket-context";
 
 import "./globals.css";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Camera Image",
@@ -15,8 +16,10 @@ export default function RootLayout({ children }) {
       <body>
         <SocketProvider>
           <Provider>
-            <Toaster />
-            {children}
+            <Suspense>
+              <Toaster />
+              {children}
+            </Suspense>
           </Provider>
         </SocketProvider>
       </body>
