@@ -2,7 +2,7 @@ import path from "path";
 import sharp from "sharp";
 import axios from "axios";
 import FormData from "form-data";
-import { ensureDirExists } from "@/app/services/utils";
+import { ensureDirExists } from "@/services/utils";
 
 /**
  * Xử lý ảnh: Tách nền ảnh gốc bằng Photoroom và ghép vào ảnh nền được cung cấp.

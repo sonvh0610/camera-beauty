@@ -1,8 +1,8 @@
-import { sequelize } from "@/app/libs/sequelize";
 import { DataTypes } from "sequelize";
+import { sequelize } from "@/libs/sequelize";
 
-export const CameraImage = sequelize.define(
-  "CameraImage",
+export const User = sequelize.define(
+  "User",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -10,21 +10,21 @@ export const CameraImage = sequelize.define(
       primaryKey: true,
       allowNull: false,
     },
-    cameraId: {
+    username: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    imagePath: {
+    password: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    faceIds: {
-      type: DataTypes.JSON,
-      allowNull: true,
+    displayName: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
   },
   {
-    tableName: "images",
-    timestamps: true,
+    tableName: "users",
+    timestamps: false,
   },
 );

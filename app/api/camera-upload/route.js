@@ -1,9 +1,9 @@
 import fs from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
-import { processImageWithPhotoroom } from "@/app/services/photoroom";
-import { detectFaces } from "@/app/services/faceDetection";
-import { CameraImage } from "@/app/models/images";
+import { processImageWithPhotoroom } from "@/services/photoroom";
+import { detectFaces } from "@/services/faceDetection";
+import { CameraImage } from "@/models/images";
 
 export async function POST(request) {
   try {

@@ -4,7 +4,7 @@ import {
   IndexFacesCommand,
   SearchFacesByImageCommand,
 } from "@aws-sdk/client-rekognition";
-import { FACE_COLLECTION_ID, rekognition } from "@/app/libs/rekognition";
+import { FACE_COLLECTION_ID, rekognition } from "@/libs/rekognition";
 
 export async function detectFaces(imageBuffer) {
   // Lấy metadata (width, height) trực tiếp từ buffer

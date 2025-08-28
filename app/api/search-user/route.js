@@ -1,7 +1,7 @@
 import { Sequelize } from "sequelize";
 import { NextResponse } from "next/server";
-import { CameraImage } from "@/app/models/images";
-import { detectFaces } from "@/app/services/faceDetection";
+import { CameraImage } from "@/models/images";
+import { detectFaces } from "@/services/faceDetection";
 
 export async function POST(request) {
   const formData = await request.formData();
