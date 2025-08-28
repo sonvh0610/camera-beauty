@@ -63,10 +63,20 @@ function Monitor3Page({ user }) {
       });
     };
 
+    const handleTicketUpdate = ({ ticketId, status }) => {
+      setTickets((currentTickets) =>
+        currentTickets.map((t) =>
+          t.id === ticketId ? { ...t, status: status } : t,
+        ),
+      );
+    };
+
     socket.on("new-ticket", handleNewTicket);
+    socket.on("ticket-updated", handleTicketUpdate);
 
     return () => {
       socket.off("new-ticket", handleNewTicket);
+      socket.off("ticket-updated", handleTicketUpdate);
     };
   }, [socket]);
 
