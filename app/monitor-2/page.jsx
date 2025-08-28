@@ -13,10 +13,11 @@ import {
   Text,
   Spinner,
 } from "@chakra-ui/react";
+import withAuth from "@/components/hoc/withAuth";
 import { toaster } from "@/components/ui/toaster";
 import { useSocket } from "@/libs/socket-context";
 
-export default function Monitor2Page() {
+function Monitor2Page({ user }) {
   const [images, setImages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,7 +28,12 @@ export default function Monitor2Page() {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch("/api/image");
+        const token = localStorage.getItem("authToken");
+        const response = await fetch("/api/image", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!response.ok) {
           throw new Error("Không thể tải dữ liệu ảnh từ server.");
         }
@@ -126,8 +132,13 @@ export default function Monitor2Page() {
         maxW="800px"
         display="flex"
         flexDirection="column"
-        maxH="90vh" // Giới hạn chiều cao tổng thể của box
+        maxH="90vh"
       >
+        {user && (
+          <Text fontSize="md" color="gray.600">
+            Xin chào, <strong>{user.displayName}</strong>
+          </Text>
+        )}
         <Heading as="h1" fontSize="30px" textAlign="center" mb={8}>
           Chọn ảnh
         </Heading>
@@ -216,3 +227,5 @@ export default function Monitor2Page() {
     </Flex>
   );
 }
+
+export default withAuth(Monitor2Page);

@@ -10,7 +10,7 @@ import {
   Input,
   Stack,
 } from "@chakra-ui/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 export default function LoginPage() {
@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const searchParams = useSearchParams();
   const router = useRouter();
 
   const handleSubmit = async (event) => {
@@ -43,7 +44,8 @@ export default function LoginPage() {
           type: "success",
         });
 
-        router.push("/dashboard");
+        const redirectPath = searchParams.get("redirect") || "/";
+        router.push(redirectPath);
       } else {
         toaster.create({
           title: "Đăng nhập thất bại",
