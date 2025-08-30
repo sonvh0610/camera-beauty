@@ -16,6 +16,7 @@ import { toaster } from "@/components/ui/toaster";
 import withAuth from "@/components/hoc/withAuth";
 import { ticketGaleryDialog } from "@/components/ui/ticket-gallery-dialog";
 import { useSocket } from "@/libs/socket-context";
+import { CustomHeader } from "@/components/ui/header";
 
 function Monitor3Page({ user }) {
   const [tickets, setTickets] = useState([]);
@@ -94,78 +95,73 @@ function Monitor3Page({ user }) {
   }
 
   return (
-    <>
-      <Flex direction="column" minH="100vh" bg="gray.50" p={8}>
-        <Flex justify="space-between" align="center" mb={8}>
-          <Heading as="h1" size="lg">
-            Danh sách phiếu
-          </Heading>
-          {user && (
-            <Text>
-              Xin chào, <strong>{user.displayName}</strong>
-            </Text>
-          )}
-        </Flex>
-
-        {tickets.length === 0 ? (
-          <Text>Không có phiếu nào để hiển thị.</Text>
-        ) : (
-          <Box flexGrow={1} overflowY="auto" overflowX="hidden" p="10px">
-            <SimpleGrid gap="15px">
-              {tickets.map((ticket) => (
-                <Box
-                  key={ticket.id}
-                  p={5}
-                  shadow="md"
-                  borderWidth="1px"
-                  borderRadius="lg"
-                  bg="white"
-                >
-                  <Flex justify="space-between" align="stretch">
-                    <Box>
-                      <Heading fontSize="xl">Phiếu #{ticket.id}</Heading>
-                      <Text mt={2} color="gray.600">
-                        Tạo bởi:{" "}
-                        <strong>{ticket.user?.displayName || "N/A"}</strong>
-                      </Text>
-                      <Text mt={2} color="gray.500">
-                        Ngày tạo: {new Date(ticket.createdAt).toLocaleString()}
-                      </Text>
-                      <Text mt={2}>
-                        Số lượng ảnh:{" "}
-                        <strong>{ticket.images?.length || 0}</strong>
-                      </Text>
-                    </Box>
-                    <Flex
-                      direction="column"
-                      align="flex-end"
-                      justify="space-between"
-                    >
-                      <Tag.Root
-                        colorPalette={
-                          ticket.status === "PENDING" ? "yellow" : "green"
-                        }
+    <Box minH="100vh" bg="gray.50">
+      <CustomHeader user={user} />
+      <Box w="100%" h="calc(100vh - 90px)" overflowY="auto" overflowX="hidden">
+        <Flex direction="column" minH="100vh" bg="gray.50" p="15px">
+          {tickets.length === 0 ? (
+            <Text>Không có phiếu nào để hiển thị.</Text>
+          ) : (
+            <Box flexGrow={1} p="10px">
+              <SimpleGrid gap="15px">
+                {tickets.map((ticket) => (
+                  <Box
+                    key={ticket.id}
+                    p={5}
+                    shadow="md"
+                    borderWidth="1px"
+                    borderRadius="lg"
+                    bg="white"
+                  >
+                    <Flex justify="space-between" align="stretch">
+                      <Box>
+                        <Heading fontSize="xl">Phiếu #{ticket.id}</Heading>
+                        <Text mt={2} color="gray.600">
+                          Tạo bởi:{" "}
+                          <strong>{ticket.user?.displayName || "N/A"}</strong>
+                        </Text>
+                        <Text mt={2} color="gray.500">
+                          Ngày tạo:{" "}
+                          {new Date(ticket.createdAt).toLocaleString()}
+                        </Text>
+                        <Text mt={2}>
+                          Số lượng ảnh:{" "}
+                          <strong>{ticket.images?.length || 0}</strong>
+                        </Text>
+                      </Box>
+                      <Flex
+                        direction="column"
+                        align="flex-end"
+                        justify="space-between"
                       >
-                        <Tag.Label>{ticket.status}</Tag.Label>
-                      </Tag.Root>
-                      <Button
-                        mt={4}
-                        colorPalette="blue"
-                        onClick={() => handleViewTicket(ticket)}
-                        disabled={!ticket.images || ticket.images.length === 0}
-                      >
-                        Xem chi tiết
-                      </Button>
+                        <Tag.Root
+                          colorPalette={
+                            ticket.status === "PENDING" ? "yellow" : "green"
+                          }
+                        >
+                          <Tag.Label>{ticket.status}</Tag.Label>
+                        </Tag.Root>
+                        <Button
+                          mt={4}
+                          colorPalette="blue"
+                          onClick={() => handleViewTicket(ticket)}
+                          disabled={
+                            !ticket.images || ticket.images.length === 0
+                          }
+                        >
+                          Xem chi tiết
+                        </Button>
+                      </Flex>
                     </Flex>
-                  </Flex>
-                </Box>
-              ))}
-            </SimpleGrid>
-          </Box>
-        )}
-        <ticketGaleryDialog.Viewport />
-      </Flex>
-    </>
+                  </Box>
+                ))}
+              </SimpleGrid>
+            </Box>
+          )}
+          <ticketGaleryDialog.Viewport />
+        </Flex>
+      </Box>
+    </Box>
   );
 }
 

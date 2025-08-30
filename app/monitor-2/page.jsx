@@ -16,6 +16,7 @@ import {
 import withAuth from "@/components/hoc/withAuth";
 import { toaster } from "@/components/ui/toaster";
 import { useSocket } from "@/libs/socket-context";
+import { CustomHeader } from "@/components/ui/header";
 
 function Monitor2Page({ user }) {
   const [images, setImages] = useState([]);
@@ -146,114 +147,100 @@ function Monitor2Page({ user }) {
   };
 
   return (
-    <Flex
-      direction="column"
-      align="center"
-      justify="center"
-      minH="100vh"
-      bg="gray.50"
-      p={{ base: 4, md: 8 }}
-    >
-      <Box
-        bg="white"
-        p="20px"
-        borderRadius="lg"
-        boxShadow="lg"
-        w="full"
-        maxW="800px"
-        display="flex"
-        flexDirection="column"
-        maxH="90vh"
-      >
-        {user && (
-          <Text fontSize="md" color="gray.600">
-            Xin chào, <strong>{user.displayName}</strong>
-          </Text>
-        )}
-        <Heading as="h1" fontSize="30px" textAlign="center" mb={8}>
-          Chọn ảnh
-        </Heading>
-
-        {/* Box chứa lưới ảnh, có thể cuộn */}
-        <Box flexGrow={1} overflowY="auto" overflowX="hidden" p="10px">
-          {isLoading ? (
-            <Flex justify="center" align="center" h="100%">
-              <Spinner size="xl" />
-            </Flex>
-          ) : error ? (
-            <Alert.Root status="error" title={error}>
-              <Alert.Indicator />
-              <Alert.Title>{error}</Alert.Title>
-            </Alert.Root>
-          ) : images.length === 0 ? (
-            <Flex justify="center" align="center" h="100%">
-              <Text color="gray.500">Không có ảnh nào để hiển thị.</Text>
-            </Flex>
-          ) : (
-            <SimpleGrid columns={{ base: 2, sm: 3, md: 4 }} gap="10px">
-              {images.map((image) => (
-                <Box
-                  key={image.id}
-                  onClick={() => handleSelectImage(image.id)}
-                  cursor="pointer"
-                  border="3px solid"
-                  borderColor={image.isSelected ? "green.400" : "gray.300"}
-                  borderRadius="md"
-                  overflow="hidden"
-                  position="relative"
-                  transition="all 0.2s"
-                  _hover={{
-                    transform: "scale(1.05)",
-                    boxShadow: "md",
-                  }}
-                >
-                  <Image
-                    src={image.src}
-                    alt={`Ảnh ${image.id}`}
-                    fit="cover"
-                    aspectRatio="1"
-                  />
-                  {image.isSelected && (
-                    <Box
-                      position="absolute"
-                      top={0}
-                      left={0}
-                      right={0}
-                      bottom={0}
-                      bg="blackAlpha.500"
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                    >
-                      <Box color="white" fontSize="2xl" fontWeight="bold">
-                        ✓
+    <Box minH="100vh" bg="gray.50">
+      <CustomHeader user={user} />
+      <Box p="15px">
+        <Box
+          bg="white"
+          p="20px"
+          borderRadius="lg"
+          boxShadow="lg"
+          w="100%"
+          h="calc(100vh - 105px)"
+          display="flex"
+          flexDirection="column"
+        >
+          {/* Box chứa lưới ảnh, có thể cuộn */}
+          <Box flexGrow={1} overflowY="auto" overflowX="hidden" p="10px">
+            {isLoading ? (
+              <Flex justify="center" align="center" h="100%">
+                <Spinner size="xl" />
+              </Flex>
+            ) : error ? (
+              <Alert.Root status="error" title={error}>
+                <Alert.Indicator />
+                <Alert.Title>{error}</Alert.Title>
+              </Alert.Root>
+            ) : images.length === 0 ? (
+              <Flex justify="center" align="center" h="100%">
+                <Text color="gray.500">Không có ảnh nào để hiển thị.</Text>
+              </Flex>
+            ) : (
+              <SimpleGrid columns={{ base: 2, sm: 3, md: 4, lg: 6 }} gap="10px">
+                {images.map((image) => (
+                  <Box
+                    key={image.id}
+                    onClick={() => handleSelectImage(image.id)}
+                    cursor="pointer"
+                    border="3px solid"
+                    borderColor={image.isSelected ? "green.400" : "gray.300"}
+                    borderRadius="md"
+                    overflow="hidden"
+                    position="relative"
+                    transition="all 0.2s"
+                    _hover={{
+                      transform: "scale(1.05)",
+                      boxShadow: "md",
+                    }}
+                  >
+                    <Image
+                      src={image.src}
+                      alt={`Ảnh ${image.id}`}
+                      fit="cover"
+                      aspectRatio="1"
+                    />
+                    {image.isSelected && (
+                      <Box
+                        position="absolute"
+                        top={0}
+                        left={0}
+                        right={0}
+                        bottom={0}
+                        bg="blackAlpha.500"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                      >
+                        <Box color="white" fontSize="2xl" fontWeight="bold">
+                          ✓
+                        </Box>
                       </Box>
-                    </Box>
-                  )}
-                </Box>
-              ))}
-            </SimpleGrid>
-          )}
-        </Box>
+                    )}
+                  </Box>
+                ))}
+              </SimpleGrid>
+            )}
+          </Box>
 
-        <Stack direction="row" spacing={4} mt={8} justify="center">
-          <Button
-            colorPalette="blue"
-            onClick={handleComplete}
-            disabled={selectedImages.length === 0 || isCompleting}
-          >
-            Hoàn thành ({selectedImages.length})
-          </Button>
-          <Button
-            colorPalette="red"
-            onClick={handleDeselectAll}
-            disabled={selectedImages.length === 0}
-          >
-            Bỏ chọn tất cả
-          </Button>
-        </Stack>
+          <Stack direction="row" spacing={4} mt={8} justify="center">
+            <Button
+              colorPalette="blue"
+              onClick={handleComplete}
+              disabled={selectedImages.length === 0 || isCompleting}
+            >
+              Hoàn thành ({selectedImages.length})
+            </Button>
+            <Button
+              colorPalette="red"
+              onClick={handleDeselectAll}
+              disabled={selectedImages.length === 0}
+            >
+              Bỏ chọn tất cả
+            </Button>
+          </Stack>
+        </Box>
       </Box>
-    </Flex>
+    </Box>
   );
 }
 

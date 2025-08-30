@@ -8,10 +8,12 @@ import {
   Flex,
   Heading,
   Input,
+  InputGroup,
   Stack,
 } from "@chakra-ui/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { LuUser, LuLock } from "react-icons/lu";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -67,37 +69,71 @@ export default function LoginPage() {
   };
 
   return (
-    <Flex minH="100vh" align="center" justify="center">
-      <Stack spacing={8}>
-        <Heading fontSize="2xl" textAlign="center" mb="15px">
-          Đăng nhập tài khoản
+    <Flex minH="100vh">
+      {/* Cột bên trái */}
+      <Flex
+        w={{ base: "100%", lg: "50%" }}
+        align="center"
+        justify="center"
+        direction="column"
+        bg="white"
+        display={{ base: "none", lg: "flex" }}
+      >
+        <Heading as="h1" fontSize="40px" color="blue.600">
+          QUẢN LÝ HỆ THỐNG
         </Heading>
+      </Flex>
 
-        <Box rounded="lg" boxShadow="sm" p={8} minW="300px">
+      {/* Cột bên phải */}
+      <Flex
+        w={{ base: "100%", lg: "50%" }}
+        align="center"
+        justify="center"
+        bg="blue.50"
+        m="20px"
+        borderRadius="10px"
+      >
+        <Box
+          w="full"
+          maxW="350px"
+          px="30px"
+          py="40px"
+          bg="white"
+          borderRadius="xl"
+          boxShadow="lg"
+          mx={4}
+        >
+          <Heading
+            as="h2"
+            size="lg"
+            textAlign="center"
+            color="blue.700"
+            mb="20px"
+          >
+            Chào mừng đã trở lại!
+          </Heading>
           <form onSubmit={handleSubmit}>
-            <Stack spacing="10px">
-              <Field.Root>
-                <Field.Label>Tên đăng nhập</Field.Label>
+            <Stack gap="15px">
+              <InputGroup startElement={<LuUser />}>
                 <Input
                   type="text"
-                  placeholder="Nhập tên đăng nhập"
+                  placeholder="Mã tài khoản"
                   disabled={isLoading}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
                 />
-              </Field.Root>
-              <Field.Root>
-                <Field.Label>Mật khẩu</Field.Label>
+              </InputGroup>
+              <InputGroup startElement={<LuLock />}>
                 <Input
                   type="password"
-                  placeholder="Nhập mật khẩu"
+                  placeholder="Mật khẩu"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
                   required
                 />
-              </Field.Root>
+              </InputGroup>
               <Button
                 type="submit"
                 colorPalette="blue"
@@ -109,7 +145,7 @@ export default function LoginPage() {
             </Stack>
           </form>
         </Box>
-      </Stack>
+      </Flex>
     </Flex>
   );
 }
