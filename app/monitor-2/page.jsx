@@ -17,6 +17,7 @@ import withAuth from "@/components/hoc/withAuth";
 import { toaster } from "@/components/ui/toaster";
 import { useSocket } from "@/libs/socket-context";
 import { CustomHeader } from "@/components/ui/header";
+import { faceDetectDialog } from "@/components/ui/face-detect-dialog";
 
 function Monitor2Page({ user }) {
   const [images, setImages] = useState([]);
@@ -44,6 +45,7 @@ function Monitor2Page({ user }) {
         const formattedImages = result.data.map((img) => ({
           id: img.id,
           src: img.imagePath,
+          faceIds: img.faceIds,
           isSelected: false,
         }));
 
@@ -97,6 +99,21 @@ function Monitor2Page({ user }) {
         title: "Đã bỏ chọn tất cả ảnh.",
         type: "success",
       });
+    }
+  };
+
+  const handleViewFaceDetection = async () => {
+    const data = await faceDetectDialog.open("a", {});
+    let selectedIds = data.map((item) => item.images).flat();
+    selectedIds = selectedIds.map((item) => item.id);
+
+    if (data.length && selectedIds.length) {
+      setImages(
+        images.map((img) => ({
+          ...img,
+          isSelected: selectedIds.indexOf(img.id) > -1,
+        })),
+      );
     }
   };
 
@@ -225,6 +242,13 @@ function Monitor2Page({ user }) {
           <Stack direction="row" spacing={4} mt={8} justify="center">
             <Button
               colorPalette="blue"
+              onClick={handleViewFaceDetection}
+              disabled={isCompleting}
+            >
+              Nhận diện khuôn mặt
+            </Button>
+            <Button
+              colorPalette="blue"
               onClick={handleComplete}
               disabled={selectedImages.length === 0 || isCompleting}
             >
@@ -240,6 +264,7 @@ function Monitor2Page({ user }) {
           </Stack>
         </Box>
       </Box>
+      <faceDetectDialog.Viewport />
     </Box>
   );
 }

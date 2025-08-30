@@ -1,7 +1,7 @@
 import { Sequelize } from "sequelize";
 import { NextResponse } from "next/server";
-import { CameraImage } from "@/models";
 import { detectFaces } from "@/services/faceDetection";
+import { CameraImage } from "@/models";
 
 export async function POST(request) {
   const formData = await request.formData();
@@ -25,27 +25,32 @@ export async function POST(request) {
   const imageBuffer = Buffer.from(await image.arrayBuffer());
   const faceIds = await detectFaces(imageBuffer);
 
-  const results = [];
-  for (const faceId of faceIds) {
-    const findImage = await CameraImage.findOne({
-      where: Sequelize.fn(
-        "JSON_CONTAINS",
-        Sequelize.col("faceIds"),
-        `"${faceId}"`,
-      ),
-    });
-    if (findImage) {
-      results.push({ faceId, imagePath: findImage.imagePath });
-    } else {
-      results.push({ faceId, imagePath: "" });
+  if (faceIds.length) {
+    const results = [];
+
+    for (const faceId of faceIds) {
+      const findImages = await CameraImage.findAll({
+        where: Sequelize.fn(
+          "JSON_CONTAINS",
+          Sequelize.col("faceIds"),
+          `"${faceId}"`,
+        ),
+        attributes: ["id"],
+      });
+      results.push({ faceId, images: findImages });
     }
+
+    return NextResponse.json(
+      {
+        message: "Gửi tìm kiếm thành công, trả về kết quả.",
+        data: results,
+      },
+      { status: 200 },
+    );
   }
 
   return NextResponse.json(
-    {
-      message: "Gửi tìm kiếm thành công, trả về kết quả.",
-      data: { results },
-    },
-    { status: 200 },
+    { message: "Gửi tìm kiếm thất bại, không thể nhận diện khuôn mặt" },
+    { status: 404 },
   );
 }
