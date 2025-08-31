@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Flex,
-  Heading,
   SimpleGrid,
   Image,
   Button,
@@ -21,6 +20,7 @@ import { faceDetectDialog } from "@/components/ui/face-detect-dialog";
 
 function Monitor2Page({ user }) {
   const [images, setImages] = useState([]);
+  const [filterFaceIds, setFilterFaceIds] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [isCompleting, setIsCompleting] = useState(false);
   const [error, setError] = useState(null);
@@ -45,7 +45,6 @@ function Monitor2Page({ user }) {
         const formattedImages = result.data.map((img) => ({
           id: img.id,
           src: img.imagePath,
-          faceIds: img.faceIds,
           isSelected: false,
         }));
 
@@ -84,6 +83,21 @@ function Monitor2Page({ user }) {
 
   const selectedImages = images.filter((img) => img.isSelected);
 
+  const filteredImages = useMemo(() => {
+    if (filterFaceIds && filterFaceIds.length) {
+      let selectedIds = filterFaceIds.map((item) => item.images).flat();
+      selectedIds = selectedIds.map((item) => item.id);
+
+      if (selectedIds.length) {
+        return images.filter((img) => selectedIds.indexOf(img.id) > -1);
+      } else {
+        return [];
+      }
+    }
+
+    return images;
+  }, [images, filterFaceIds]);
+
   const handleSelectImage = (id) => {
     setImages(
       images.map((img) =>
@@ -104,17 +118,14 @@ function Monitor2Page({ user }) {
 
   const handleViewFaceDetection = async () => {
     const data = await faceDetectDialog.open("a", {});
-    let selectedIds = data.map((item) => item.images).flat();
-    selectedIds = selectedIds.map((item) => item.id);
-
-    if (data.length && selectedIds.length) {
-      setImages(
-        images.map((img) => ({
-          ...img,
-          isSelected: selectedIds.indexOf(img.id) > -1,
-        })),
-      );
+    if (data) {
+      setImages(images.map((img) => ({ ...img, isSelected: false })));
+      setFilterFaceIds(data);
     }
+  };
+
+  const handleRemoveFilter = () => {
+    setFilterFaceIds([]);
   };
 
   const handleComplete = async () => {
@@ -188,13 +199,13 @@ function Monitor2Page({ user }) {
                 <Alert.Indicator />
                 <Alert.Title>{error}</Alert.Title>
               </Alert.Root>
-            ) : images.length === 0 ? (
+            ) : filteredImages.length === 0 ? (
               <Flex justify="center" align="center" h="100%">
                 <Text color="gray.500">Không có ảnh nào để hiển thị.</Text>
               </Flex>
             ) : (
               <SimpleGrid columns={{ base: 2, sm: 3, md: 4, lg: 6 }} gap="10px">
-                {images.map((image) => (
+                {filteredImages.map((image) => (
                   <Box
                     key={image.id}
                     onClick={() => handleSelectImage(image.id)}
@@ -240,13 +251,24 @@ function Monitor2Page({ user }) {
           </Box>
 
           <Stack direction="row" spacing={4} mt={8} justify="center">
-            <Button
-              colorPalette="blue"
-              onClick={handleViewFaceDetection}
-              disabled={isCompleting}
-            >
-              Nhận diện khuôn mặt
-            </Button>
+            {filterFaceIds.length ? (
+              <Button
+                colorPalette="red"
+                onClick={handleRemoveFilter}
+                disabled={isCompleting}
+              >
+                Huỷ bộ lọc
+              </Button>
+            ) : (
+              <Button
+                colorPalette="blue"
+                onClick={handleViewFaceDetection}
+                disabled={isCompleting}
+              >
+                Nhận diện khuôn mặt
+              </Button>
+            )}
+
             <Button
               colorPalette="blue"
               onClick={handleComplete}
