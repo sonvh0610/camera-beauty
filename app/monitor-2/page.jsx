@@ -11,18 +11,21 @@ import {
   Alert,
   Text,
   Spinner,
+  Center,
 } from "@chakra-ui/react";
 import withAuth from "@/components/hoc/withAuth";
 import { toaster } from "@/components/ui/toaster";
 import { useSocket } from "@/libs/socket-context";
 import { CustomHeader } from "@/components/ui/header";
 import { faceDetectDialog } from "@/components/ui/face-detect-dialog";
+import { imagePreviewDialog } from "@/components/ui/image-preview-dialog";
 
 function Monitor2Page({ user }) {
   const [images, setImages] = useState([]);
   const [filterFaceIds, setFilterFaceIds] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [viewingImage, setViewingImage] = useState(null);
   const [error, setError] = useState(null);
   const socket = useSocket();
 
@@ -116,6 +119,11 @@ function Monitor2Page({ user }) {
     }
   };
 
+  const handleViewImage = (image) => {
+    setViewingImage(image.src);
+    imagePreviewDialog.open("img", { imagePath: image.src });
+  };
+
   const handleViewFaceDetection = async () => {
     const data = await faceDetectDialog.open("a", {});
     if (data) {
@@ -206,44 +214,54 @@ function Monitor2Page({ user }) {
             ) : (
               <SimpleGrid columns={{ base: 2, sm: 3, md: 4, lg: 6 }} gap="10px">
                 {filteredImages.map((image) => (
-                  <Box
-                    key={image.id}
-                    onClick={() => handleSelectImage(image.id)}
-                    cursor="pointer"
-                    border="3px solid"
-                    borderColor={image.isSelected ? "green.400" : "gray.300"}
-                    borderRadius="md"
-                    overflow="hidden"
-                    position="relative"
-                    transition="all 0.2s"
-                    _hover={{
-                      transform: "scale(1.05)",
-                      boxShadow: "md",
-                    }}
-                  >
-                    <Image
-                      src={image.src}
-                      alt={`Ảnh ${image.id}`}
-                      fit="cover"
-                      aspectRatio="1"
-                    />
-                    {image.isSelected && (
-                      <Box
-                        position="absolute"
-                        top={0}
-                        left={0}
-                        right={0}
-                        bottom={0}
-                        bg="blackAlpha.500"
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="center"
-                      >
-                        <Box color="white" fontSize="2xl" fontWeight="bold">
-                          ✓
+                  <Box key={image.id}>
+                    <Box
+                      onClick={() => handleSelectImage(image.id)}
+                      cursor="pointer"
+                      border="3px solid"
+                      borderColor={image.isSelected ? "green.400" : "gray.300"}
+                      borderRadius="md"
+                      overflow="hidden"
+                      position="relative"
+                      transition="all 0.2s"
+                      _hover={{
+                        transform: "scale(1.05)",
+                        boxShadow: "md",
+                      }}
+                    >
+                      <Image
+                        src={image.src}
+                        alt={`Ảnh ${image.id}`}
+                        fit="cover"
+                        aspectRatio="1"
+                      />
+                      {image.isSelected && (
+                        <Box
+                          position="absolute"
+                          top={0}
+                          left={0}
+                          right={0}
+                          bottom={0}
+                          bg="blackAlpha.500"
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                        >
+                          <Box color="white" fontSize="2xl" fontWeight="bold">
+                            ✓
+                          </Box>
                         </Box>
-                      </Box>
-                    )}
+                      )}
+                    </Box>
+                    <Center mt="8px">
+                      <Button
+                        colorPalette="blue"
+                        onClick={() => handleViewImage(image)}
+                        disabled={isCompleting}
+                      >
+                        Xem
+                      </Button>
+                    </Center>
                   </Box>
                 ))}
               </SimpleGrid>
@@ -287,6 +305,7 @@ function Monitor2Page({ user }) {
         </Box>
       </Box>
       <faceDetectDialog.Viewport />
+      <imagePreviewDialog.Viewport />
     </Box>
   );
 }

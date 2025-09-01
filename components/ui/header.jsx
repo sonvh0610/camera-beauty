@@ -15,14 +15,14 @@ export const CustomHeader = ({ user }) => {
   return (
     <Flex
       w="100%"
-      h="70px"
-      p="15px"
+      h="50px"
       backgroundColor="blue.600"
       justifyContent="space-between"
       alignItems="center"
       gap="15px"
+      px="15px"
     >
-      <Heading color="white" fontSize={{ base: "20px", lg: "30px" }}>
+      <Heading color="white" fontSize={{ base: "18px", lg: "20px" }}>
         CAMERA BEAUTY
       </Heading>
       <Text color="white" ml="auto">

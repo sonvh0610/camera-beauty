@@ -8,7 +8,6 @@ import {
   CloseButton,
   Dialog,
   Flex,
-  Image,
   Portal,
   Spinner,
   Text,
@@ -23,7 +22,6 @@ export const faceDetectDialog = createOverlay((props) => {
   const { open, ...rest } = props;
 
   const webcamRef = useRef(null);
-  const [capturedImage, setCapturedImage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCameraReady, setIsCameraReady] = useState(false);
 
@@ -31,20 +29,9 @@ export const faceDetectDialog = createOverlay((props) => {
     if (!open) {
       setTimeout(() => {
         setIsCameraReady(false);
-        setCapturedImage(null);
       }, 300);
     }
   }, [open]);
-
-  const capture = useCallback(() => {
-    const imageSrc = webcamRef.current.getScreenshot();
-    setCapturedImage(imageSrc);
-  }, [webcamRef]);
-
-  const handleRetake = () => {
-    setCapturedImage(null);
-    setIsCameraReady(false);
-  };
 
   const dataURLtoBlob = (dataurl) => {
     const arr = dataurl.split(",");
@@ -58,12 +45,11 @@ export const faceDetectDialog = createOverlay((props) => {
     return new Blob([u8arr], { type: mime });
   };
 
-  const handleSubmit = async () => {
-    if (!capturedImage) return;
+  const handleSubmit = async (imageSrc) => {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem("authToken");
-      const imageBlob = dataURLtoBlob(capturedImage);
+      const imageBlob = dataURLtoBlob(imageSrc);
 
       const formData = new FormData();
       formData.append("image", imageBlob, "face-capture.jpg");
@@ -105,6 +91,11 @@ export const faceDetectDialog = createOverlay((props) => {
     faceDetectDialog.close("a", data);
   };
 
+  const capture = useCallback(() => {
+    const imageSrc = webcamRef.current.getScreenshot();
+    handleSubmit(imageSrc);
+  }, [webcamRef, handleSubmit]);
+
   return (
     <Dialog.Root open={open} {...rest} size="lg">
       <Portal>
@@ -138,83 +129,55 @@ export const faceDetectDialog = createOverlay((props) => {
               {webcamRef && (
                 <>
                   <Flex justify="center" align="center" direction="column">
-                    {capturedImage ? (
-                      <Image
-                        src={capturedImage}
-                        alt="Ảnh đã chụp"
-                        borderRadius="md"
+                    <Box
+                      position="relative"
+                      borderRadius="md"
+                      overflow="hidden"
+                      w="100%"
+                    >
+                      <Webcam
+                        audio={false}
+                        ref={webcamRef}
+                        screenshotFormat="image/jpeg"
+                        width="100%"
+                        videoConstraints={{ facingMode: "user" }}
+                        onUserMedia={() => setIsCameraReady(true)}
                       />
-                    ) : (
-                      <Box
-                        position="relative"
-                        borderRadius="md"
-                        overflow="hidden"
-                        w="100%"
-                      >
-                        <Webcam
-                          audio={false}
-                          ref={webcamRef}
-                          screenshotFormat="image/jpeg"
-                          width="100%"
-                          videoConstraints={{ facingMode: "user" }}
-                          onUserMedia={() => setIsCameraReady(true)}
+
+                      {!isCameraReady && (
+                        <Flex
+                          position="absolute"
+                          top={0}
+                          left={0}
+                          right={0}
+                          bottom={0}
+                          bg="blackAlpha.700"
+                          align="center"
+                          justify="center"
+                        >
+                          <Spinner size="xl" color="white" />
+                        </Flex>
+                      )}
+
+                      {isCameraReady && (
+                        <Box
+                          position="absolute"
+                          top="50%"
+                          left="50%"
+                          transform="translate(-50%, -50%)"
+                          width="65%"
+                          height="85%"
+                          borderRadius="50%"
+                          border="3px solid white"
+                          boxShadow="0 0 0 9999px rgba(0, 0, 0, 0.5)"
+                          pointerEvents="none"
                         />
-
-                        {!isCameraReady && (
-                          <Flex
-                            position="absolute"
-                            top={0}
-                            left={0}
-                            right={0}
-                            bottom={0}
-                            bg="blackAlpha.700"
-                            align="center"
-                            justify="center"
-                          >
-                            <Spinner size="xl" color="white" />
-                          </Flex>
-                        )}
-
-                        {isCameraReady && (
-                          <Box
-                            position="absolute"
-                            top="50%"
-                            left="50%"
-                            transform="translate(-50%, -50%)"
-                            width="65%"
-                            height="85%"
-                            borderRadius="50%"
-                            border="3px solid white"
-                            boxShadow="0 0 0 9999px rgba(0, 0, 0, 0.5)"
-                            pointerEvents="none"
-                          />
-                        )}
-                      </Box>
-                    )}
+                      )}
+                    </Box>
                   </Flex>
-                  {capturedImage ? (
-                    <Flex w="100%" justify="space-between" gap="10px">
-                      <Button
-                        colorPalette="red"
-                        onClick={handleRetake}
-                        flex={1}
-                      >
-                        Chụp lại
-                      </Button>
-                      <Button
-                        flex={1}
-                        colorPalette="blue"
-                        onClick={handleSubmit}
-                        isLoading={isSubmitting}
-                      >
-                        Gửi ảnh
-                      </Button>
-                    </Flex>
-                  ) : (
-                    <Button colorPalette="blue" onClick={capture} w="100%">
-                      Chụp ảnh
-                    </Button>
-                  )}
+                  <Button colorPalette="blue" onClick={capture} w="100%">
+                    Chụp ảnh
+                  </Button>
                 </>
               )}
             </Dialog.Body>
