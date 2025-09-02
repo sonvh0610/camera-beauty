@@ -1,5 +1,6 @@
 "use client";
 
+import ReactImageGallery from "react-image-gallery";
 import { useState, useEffect, useMemo } from "react";
 import {
   Box,
@@ -12,21 +13,70 @@ import {
   Text,
   Spinner,
   Center,
+  Dialog,
+  Portal,
+  CloseButton,
 } from "@chakra-ui/react";
 import withAuth from "@/components/hoc/withAuth";
 import { toaster } from "@/components/ui/toaster";
 import { useSocket } from "@/libs/socket-context";
 import { CustomHeader } from "@/components/ui/header";
 import { faceDetectDialog } from "@/components/ui/face-detect-dialog";
-import { imagePreviewDialog } from "@/components/ui/image-preview-dialog";
+
+import "react-image-gallery/styles/css/image-gallery.css";
+
+function ImagePreview({ image, onClick, hideBorder }) {
+  return (
+    <Box
+      onClick={onClick}
+      cursor="pointer"
+      border={hideBorder ? "0" : "3px solid"}
+      borderColor={image.isSelected ? "green.400" : "gray.300"}
+      borderRadius={hideBorder ? "none" : "md"}
+      overflow="hidden"
+      position="relative"
+      transition="all 0.2s"
+      _hover={{
+        transform: "scale(1.05)",
+        boxShadow: "md",
+      }}
+    >
+      <Image
+        src={image.src}
+        alt={`Ảnh ${image.id}`}
+        fit="cover"
+        aspectRatio="1"
+      />
+      {image.isSelected && (
+        <Box
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          bg="blackAlpha.500"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Box color="white" fontSize="2xl" fontWeight="bold">
+            ✓
+          </Box>
+        </Box>
+      )}
+    </Box>
+  );
+}
 
 function Monitor2Page({ user }) {
   const [images, setImages] = useState([]);
   const [filterFaceIds, setFilterFaceIds] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [isCompleting, setIsCompleting] = useState(false);
-  const [viewingImage, setViewingImage] = useState(null);
   const [error, setError] = useState(null);
+
+  const [openSlideDialog, setOpenSlideDialog] = useState(false);
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const socket = useSocket();
 
   useEffect(() => {
@@ -101,12 +151,27 @@ function Monitor2Page({ user }) {
     return images;
   }, [images, filterFaceIds]);
 
+  const galleryImages = useMemo(() => {
+    return filteredImages.map((image) => ({
+      ...image,
+      original: image.src,
+      thumbnail: image.src,
+      originalAlt: `Ảnh ${image.id}`,
+      thumbnailAlt: `Thumbnail ${image.id}`,
+    }));
+  }, [filteredImages]);
+
   const handleSelectImage = (id) => {
     setImages(
       images.map((img) =>
         img.id === id ? { ...img, isSelected: !img.isSelected } : img,
       ),
     );
+  };
+
+  const handleSelectImageOnSlide = () => {
+    const image = filteredImages[activeSlideIndex];
+    handleSelectImage(image.id);
   };
 
   const handleDeselectAll = (showToast = true) => {
@@ -119,9 +184,9 @@ function Monitor2Page({ user }) {
     }
   };
 
-  const handleViewImage = (image) => {
-    setViewingImage(image.src);
-    imagePreviewDialog.open("img", { imagePath: image.src });
+  const handleViewImage = (imageIdx) => {
+    setOpenSlideDialog(true);
+    setActiveSlideIndex(imageIdx);
   };
 
   const handleViewFaceDetection = async () => {
@@ -170,6 +235,7 @@ function Monitor2Page({ user }) {
         description: result.message,
         type: "success",
       });
+      setOpenSlideDialog(false);
       handleDeselectAll(false);
     } catch (err) {
       toaster.create({
@@ -213,50 +279,16 @@ function Monitor2Page({ user }) {
               </Flex>
             ) : (
               <SimpleGrid columns={{ base: 2, sm: 3, md: 4, lg: 6 }} gap="10px">
-                {filteredImages.map((image) => (
+                {filteredImages.map((image, idx) => (
                   <Box key={image.id}>
-                    <Box
+                    <ImagePreview
+                      image={image}
                       onClick={() => handleSelectImage(image.id)}
-                      cursor="pointer"
-                      border="3px solid"
-                      borderColor={image.isSelected ? "green.400" : "gray.300"}
-                      borderRadius="md"
-                      overflow="hidden"
-                      position="relative"
-                      transition="all 0.2s"
-                      _hover={{
-                        transform: "scale(1.05)",
-                        boxShadow: "md",
-                      }}
-                    >
-                      <Image
-                        src={image.src}
-                        alt={`Ảnh ${image.id}`}
-                        fit="cover"
-                        aspectRatio="1"
-                      />
-                      {image.isSelected && (
-                        <Box
-                          position="absolute"
-                          top={0}
-                          left={0}
-                          right={0}
-                          bottom={0}
-                          bg="blackAlpha.500"
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                        >
-                          <Box color="white" fontSize="2xl" fontWeight="bold">
-                            ✓
-                          </Box>
-                        </Box>
-                      )}
-                    </Box>
+                    />
                     <Center mt="8px">
                       <Button
                         colorPalette="blue"
-                        onClick={() => handleViewImage(image)}
+                        onClick={() => handleViewImage(idx)}
                         disabled={isCompleting}
                       >
                         Xem
@@ -305,7 +337,75 @@ function Monitor2Page({ user }) {
         </Box>
       </Box>
       <faceDetectDialog.Viewport />
-      <imagePreviewDialog.Viewport />
+
+      <Dialog.Root
+        open={openSlideDialog}
+        onOpenChange={(e) => setOpenSlideDialog(e.open)}
+        size="lg"
+      >
+        <Portal>
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content>
+              <Dialog.Header>
+                <Dialog.Title>Dialog Title</Dialog.Title>
+              </Dialog.Header>
+              {galleryImages && galleryImages[activeSlideIndex] && (
+                <Dialog.Body>
+                  <ReactImageGallery
+                    items={galleryImages}
+                    showPlayButton={false}
+                    showFullscreenButton={true}
+                    thumbnailPosition="bottom"
+                    startIndex={activeSlideIndex}
+                    onSlide={(idx) => setActiveSlideIndex(idx)}
+                    renderThumbInner={(props) => (
+                      <ImagePreview image={props} hideBorder={true} />
+                    )}
+                  />
+                  <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                    gap="10px"
+                    mt="10px"
+                  >
+                    <Button
+                      colorPalette={
+                        galleryImages[activeSlideIndex].isSelected
+                          ? "red"
+                          : "blue"
+                      }
+                      onClick={handleSelectImageOnSlide}
+                      disabled={isCompleting}
+                    >
+                      {galleryImages[activeSlideIndex].isSelected
+                        ? "Bỏ chọn"
+                        : "Chọn"}
+                    </Button>
+                    <Button
+                      colorPalette="blue"
+                      onClick={handleComplete}
+                      disabled={selectedImages.length === 0 || isCompleting}
+                    >
+                      Hoàn thành ({selectedImages.length})
+                    </Button>
+                    <Button
+                      colorPalette="red"
+                      onClick={() => setOpenSlideDialog(false)}
+                    >
+                      Thoát
+                    </Button>
+                  </Box>
+                </Dialog.Body>
+              )}
+              <Dialog.CloseTrigger asChild>
+                <CloseButton size="sm" />
+              </Dialog.CloseTrigger>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
     </Box>
   );
 }

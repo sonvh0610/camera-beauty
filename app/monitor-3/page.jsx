@@ -1,16 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  Box,
-  Flex,
-  Heading,
-  SimpleGrid,
-  Button,
-  Text,
-  Spinner,
-  Tag,
-} from "@chakra-ui/react";
+import { useState, useEffect, useMemo } from "react";
+import { Box, Flex, Button, Spinner, Tabs, Table } from "@chakra-ui/react";
 
 import { toaster } from "@/components/ui/toaster";
 import withAuth from "@/components/hoc/withAuth";
@@ -21,7 +12,13 @@ import { CustomHeader } from "@/components/ui/header";
 function Monitor3Page({ user }) {
   const [tickets, setTickets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedTicket, setSelectedTicket] = useState(null);
+
+  const pendingTickets = useMemo(() => {
+    return tickets.filter((t) => t.status === "PENDING");
+  }, [tickets]);
+  const completedTickets = useMemo(() => {
+    return tickets.filter((t) => t.status === "COMPLETED");
+  }, [tickets]);
 
   const socket = useSocket();
 
@@ -83,7 +80,6 @@ function Monitor3Page({ user }) {
 
   const handleViewTicket = (ticket) => {
     ticketGaleryDialog.open("a", { ticket });
-    setSelectedTicket(ticket);
   };
 
   if (isLoading) {
@@ -97,52 +93,39 @@ function Monitor3Page({ user }) {
   return (
     <Box minH="100vh" bg="gray.50">
       <CustomHeader user={user} />
-      <Box w="100%" h="calc(100vh - 90px)" overflowY="auto" overflowX="hidden">
-        <Flex direction="column" minH="100vh" bg="gray.50" p="15px">
-          {tickets.length === 0 ? (
-            <Text>Không có phiếu nào để hiển thị.</Text>
-          ) : (
-            <Box flexGrow={1} p="10px">
-              <SimpleGrid gap="15px">
-                {tickets.map((ticket) => (
-                  <Box
-                    key={ticket.id}
-                    p={5}
-                    shadow="md"
-                    borderWidth="1px"
-                    borderRadius="lg"
-                    bg="white"
-                  >
-                    <Flex justify="space-between" align="stretch">
-                      <Box>
-                        <Heading fontSize="xl">Phiếu #{ticket.id}</Heading>
-                        <Text mt={2} color="gray.600">
-                          Tạo bởi:{" "}
-                          <strong>{ticket.user?.displayName || "N/A"}</strong>
-                        </Text>
-                        <Text mt={2} color="gray.500">
-                          Ngày tạo:{" "}
-                          {new Date(ticket.createdAt).toLocaleString()}
-                        </Text>
-                        <Text mt={2}>
-                          Số lượng ảnh:{" "}
-                          <strong>{ticket.images?.length || 0}</strong>
-                        </Text>
-                      </Box>
-                      <Flex
-                        direction="column"
-                        align="flex-end"
-                        justify="space-between"
-                      >
-                        <Tag.Root
-                          colorPalette={
-                            ticket.status === "PENDING" ? "yellow" : "green"
-                          }
-                        >
-                          <Tag.Label>{ticket.status}</Tag.Label>
-                        </Tag.Root>
+      <Box p="15px">
+        <Tabs.Root defaultValue="PENDING" variant="plain" fitted>
+          <Tabs.List bg="bg.muted" rounded="l3" p="5px">
+            <Tabs.Trigger value="PENDING">Chưa In</Tabs.Trigger>
+            <Tabs.Trigger value="COMPLETED">Đã In</Tabs.Trigger>
+            <Tabs.Indicator rounded="l2" bg="blue.300" />
+          </Tabs.List>
+          <Tabs.Content value="PENDING">
+            <Table.ScrollArea borderWidth="1px" height="calc(100vh - 150px)">
+              <Table.Root size="md" variant="outline" showColumnBorder>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.ColumnHeader>ID Phiếu</Table.ColumnHeader>
+                    <Table.ColumnHeader>Người tạo</Table.ColumnHeader>
+                    <Table.ColumnHeader>Ngày tạo</Table.ColumnHeader>
+                    <Table.ColumnHeader>Số lượng ảnh</Table.ColumnHeader>
+                    <Table.ColumnHeader></Table.ColumnHeader>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {pendingTickets.map((ticket) => (
+                    <Table.Row key={ticket.id}>
+                      <Table.Cell>#{ticket.id}</Table.Cell>
+                      <Table.Cell>
+                        <strong>{ticket.user?.displayName || "N/A"}</strong>
+                      </Table.Cell>
+                      <Table.Cell>
+                        {new Date(ticket.createdAt).toLocaleString()}
+                      </Table.Cell>
+                      <Table.Cell>{ticket.images?.length || 0}</Table.Cell>
+                      <Table.Cell textAlign="end">
                         <Button
-                          mt={4}
+                          size="sm"
                           colorPalette="blue"
                           onClick={() => handleViewTicket(ticket)}
                           disabled={
@@ -151,16 +134,57 @@ function Monitor3Page({ user }) {
                         >
                           Xem chi tiết
                         </Button>
-                      </Flex>
-                    </Flex>
-                  </Box>
-                ))}
-              </SimpleGrid>
-            </Box>
-          )}
-          <ticketGaleryDialog.Viewport />
-        </Flex>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Root>
+            </Table.ScrollArea>
+          </Tabs.Content>
+          <Tabs.Content value="COMPLETED">
+            <Table.ScrollArea borderWidth="1px" height="calc(100vh - 150px)">
+              <Table.Root size="md" variant="outline" showColumnBorder>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.ColumnHeader>ID Phiếu</Table.ColumnHeader>
+                    <Table.ColumnHeader>Người tạo</Table.ColumnHeader>
+                    <Table.ColumnHeader>Ngày tạo</Table.ColumnHeader>
+                    <Table.ColumnHeader>Số lượng ảnh</Table.ColumnHeader>
+                    <Table.ColumnHeader></Table.ColumnHeader>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {completedTickets.map((ticket) => (
+                    <Table.Row key={ticket.id}>
+                      <Table.Cell>#{ticket.id}</Table.Cell>
+                      <Table.Cell>
+                        <strong>{ticket.user?.displayName || "N/A"}</strong>
+                      </Table.Cell>
+                      <Table.Cell>
+                        {new Date(ticket.createdAt).toLocaleString()}
+                      </Table.Cell>
+                      <Table.Cell>{ticket.images?.length || 0}</Table.Cell>
+                      <Table.Cell textAlign="end">
+                        <Button
+                          size="sm"
+                          colorPalette="blue"
+                          onClick={() => handleViewTicket(ticket)}
+                          disabled={
+                            !ticket.images || ticket.images.length === 0
+                          }
+                        >
+                          Xem chi tiết
+                        </Button>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Root>
+            </Table.ScrollArea>
+          </Tabs.Content>
+        </Tabs.Root>
       </Box>
+      <ticketGaleryDialog.Viewport />
     </Box>
   );
 }

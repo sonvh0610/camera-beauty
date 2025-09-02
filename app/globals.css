@@ -7,3 +7,14 @@ body {
   color: var(--foreground);
   background: var(--background);
 }
+
+.image-gallery-image {
+  aspect-ratio: 4/3;
+  width: 100%;
+  height: 100%;
+  object-fit: cover !important;
+}
+.image-gallery-thumbnail-image {
+  aspect-ratio: 16/10;
+  object-fit: cover;
+}
