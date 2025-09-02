@@ -348,7 +348,7 @@ function Monitor2Page({ user }) {
           <Dialog.Positioner>
             <Dialog.Content>
               <Dialog.Header>
-                <Dialog.Title>Dialog Title</Dialog.Title>
+                <Dialog.Title>Xem chi tiết</Dialog.Title>
               </Dialog.Header>
               {galleryImages && galleryImages[activeSlideIndex] && (
                 <Dialog.Body>
